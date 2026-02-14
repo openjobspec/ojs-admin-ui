@@ -1,0 +1,57 @@
+import { NavLink } from 'react-router-dom';
+import { useManifest } from '@/hooks/useAppContext';
+import { hasCapability } from '@/api/manifest';
+
+const navItems = [
+  { to: '/', label: 'Dashboard', icon: '▣' },
+  { to: '/queues', label: 'Queues', icon: '☰' },
+  { to: '/jobs', label: 'Jobs', icon: '⚡' },
+  { to: '/workers', label: 'Workers', icon: '⚙' },
+  { to: '/dead-letter', label: 'Dead Letter', icon: '☠', capability: 'dead_letter' },
+  { to: '/settings', label: 'Settings', icon: '⚑' },
+];
+
+export function Sidebar() {
+  const manifest = useManifest();
+
+  return (
+    <aside className="w-56 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col">
+      <div className="px-4 py-4 border-b border-gray-200 dark:border-gray-800">
+        <h1 className="text-lg font-bold text-blue-600 dark:text-blue-400">OJS Admin</h1>
+        {manifest && (
+          <p className="text-xs text-gray-500 mt-0.5">
+            {manifest.implementation.name} v{manifest.implementation.version}
+          </p>
+        )}
+      </div>
+      <nav className="flex-1 py-2">
+        {navItems.map((item) => {
+          if (item.capability && manifest && !hasCapability(manifest, item.capability)) return null;
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                `flex items-center gap-2 px-4 py-2 text-sm ${
+                  isActive
+                    ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-medium border-r-2 border-blue-600'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                }`
+              }
+              end={item.to === '/'}
+            >
+              <span className="text-base">{item.icon}</span>
+              {item.label}
+            </NavLink>
+          );
+        })}
+      </nav>
+      {manifest && (
+        <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-800 text-xs text-gray-500">
+          <div>Backend: {manifest.backend}</div>
+          <div>Level {manifest.conformance_level}</div>
+        </div>
+      )}
+    </aside>
+  );
+}
