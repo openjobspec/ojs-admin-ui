@@ -90,11 +90,12 @@ export interface JobDetail extends JobSummary {
 }
 
 export interface JobError {
-  attempt: number;
-  type: string;
+  code: string;
   message: string;
-  backtrace?: string[];
+  type?: string;
+  attempt: number;
   occurred_at: string;
+  backtrace?: string[];
 }
 
 export type JobState =

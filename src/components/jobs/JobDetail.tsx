@@ -93,7 +93,7 @@ export function JobDetail({ jobId, onClose }: JobDetailProps) {
                 {job.errors.map((err, i) => (
                   <div key={i} className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded p-3 text-xs">
                     <div className="flex justify-between">
-                      <span className="font-medium text-red-700 dark:text-red-400">{err.type}</span>
+                      <span className="font-medium text-red-700 dark:text-red-400">{err.code}{err.type ? ` (${err.type})` : ''}</span>
                       <span className="text-gray-500">Attempt {err.attempt} · {timeAgo(err.occurred_at)}</span>
                     </div>
                     <p className="mt-1 text-red-600 dark:text-red-300">{err.message}</p>
