@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import type { QueueSummary } from '@/api/types';
+import type { QueueSummary, QueueDetail } from '@/api/types';
 import { useClient } from '@/hooks/useAppContext';
 import { formatNumber, formatRate } from '@/lib/formatting';
+import { QueueConfigModal } from '@/components/queues/QueueConfigModal';
 
 interface QueueTableProps {
   queues: QueueSummary[];
@@ -11,6 +12,7 @@ interface QueueTableProps {
 export function QueueTable({ queues, onRefresh }: QueueTableProps) {
   const client = useClient();
   const [acting, setActing] = useState<string | null>(null);
+  const [configQueue, setConfigQueue] = useState<QueueDetail | null>(null);
 
   const togglePause = async (q: QueueSummary) => {
     setActing(q.name);
@@ -23,7 +25,17 @@ export function QueueTable({ queues, onRefresh }: QueueTableProps) {
     }
   };
 
+  const openConfig = async (q: QueueSummary) => {
+    try {
+      const detail = await client.queue(q.name);
+      setConfigQueue(detail);
+    } catch {
+      setConfigQueue(q as QueueDetail);
+    }
+  };
+
   return (
+    <>
     <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
       <table className="w-full text-sm">
         <thead className="bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs uppercase">
@@ -61,13 +73,21 @@ export function QueueTable({ queues, onRefresh }: QueueTableProps) {
                 )}
               </td>
               <td className="px-3 py-3 text-center">
-                <button
-                  onClick={() => togglePause(q)}
-                  disabled={acting === q.name}
-                  className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40"
-                >
-                  {acting === q.name ? '…' : q.paused ? 'Resume' : 'Pause'}
-                </button>
+                <div className="flex gap-1 justify-center">
+                  <button
+                    onClick={() => togglePause(q)}
+                    disabled={acting === q.name}
+                    className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40"
+                  >
+                    {acting === q.name ? '…' : q.paused ? 'Resume' : 'Pause'}
+                  </button>
+                  <button
+                    onClick={() => openConfig(q)}
+                    className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    Config
+                  </button>
+                </div>
               </td>
             </tr>
           ))}
@@ -77,5 +97,14 @@ export function QueueTable({ queues, onRefresh }: QueueTableProps) {
         <p className="text-center py-8 text-gray-500 text-sm">No queues found.</p>
       )}
     </div>
+
+    {configQueue && (
+      <QueueConfigModal
+        queue={configQueue}
+        onClose={() => setConfigQueue(null)}
+        onSave={onRefresh}
+      />
+    )}
+    </>
   );
 }
