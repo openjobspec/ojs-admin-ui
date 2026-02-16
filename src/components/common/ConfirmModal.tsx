@@ -25,9 +25,9 @@ export function ConfirmModal({ open, title, message, confirmLabel = 'Confirm', o
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onCancel}>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-lg font-semibold mb-2">{title}</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onCancel} role="presentation">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" onClick={(e) => e.stopPropagation()}>
+        <h3 id="confirm-modal-title" className="text-lg font-semibold mb-2">{title}</h3>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">{message}</p>
         <div className="flex justify-end gap-3">
           <button

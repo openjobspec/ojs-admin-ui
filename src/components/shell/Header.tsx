@@ -24,6 +24,8 @@ export function Header() {
         <span
           className={`inline-block w-2 h-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500 animate-pulse'}`}
           title={connected ? 'Connected to backend' : 'Disconnected from backend'}
+          role="status"
+          aria-label={connected ? 'Connected to backend' : 'Disconnected from backend'}
         />
         Open Job Spec Admin Dashboard
       </div>
