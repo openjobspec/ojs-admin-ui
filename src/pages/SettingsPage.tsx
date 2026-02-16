@@ -1,11 +1,22 @@
-import { useManifest } from '@/hooks/useAppContext';
+import { useCallback } from 'react';
+import { useManifest, useClient } from '@/hooks/useAppContext';
+import { usePolling } from '@/hooks/usePolling';
 import { conformanceBadge } from '@/api/manifest';
 import { JsonViewer } from '@/components/common/JsonViewer';
+import { MiddlewareList } from '@/components/settings/MiddlewareList';
+import type { MiddlewareEntry } from '@/api/types';
 
 export function SettingsPage() {
   const manifest = useManifest();
+  const client = useClient();
 
-  if (!manifest) return <p className="text-gray-500">Loading manifest…</p>;
+  const fetchMiddleware = useCallback(
+    () => client.middleware().catch((err) => { console.warn('Failed to load middleware:', err); return { enqueue: [], execution: [] }; }),
+    [client],
+  );
+  const { data: middleware } = usePolling<{ enqueue: MiddlewareEntry[]; execution: MiddlewareEntry[] }>(fetchMiddleware, 30000);
+
+  if (!manifest) return <p className="text-gray-500" role="status" aria-live="polite">Loading manifest…</p>;
 
   const extensions = manifest.extensions;
   const officialExts = extensions && !Array.isArray(extensions) ? extensions.official ?? [] : [];
@@ -64,6 +75,14 @@ export function SettingsPage() {
           {legacyExts.map((e) => (
             <div key={e} className="text-sm text-gray-600">{e}</div>
           ))}
+        </section>
+      )}
+
+      {/* Middleware */}
+      {middleware && (
+        <section className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+          <h2 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase mb-3">Middleware</h2>
+          <MiddlewareList enqueue={middleware.enqueue} execution={middleware.execution} />
         </section>
       )}
 
