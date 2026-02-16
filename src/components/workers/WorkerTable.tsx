@@ -57,7 +57,21 @@ export function WorkerTable({ workers, onRefresh }: WorkerTableProps) {
                 </td>
                 <td className="px-3 py-3 text-gray-500 text-xs">{w.queues.join(', ')}</td>
                 <td className="px-3 py-3 text-right">{w.active_jobs}</td>
-                <td className="px-3 py-3 text-right text-gray-500 text-xs">{timeAgo(w.last_heartbeat_at)}</td>
+                <td className="px-3 py-3 text-right text-gray-500 text-xs">
+                  {w.state === 'quiet' && w.active_jobs > 0 ? (
+                    <div>
+                      <div>{timeAgo(w.last_heartbeat_at)}</div>
+                      <div className="text-amber-600">Draining ({w.active_jobs} left)</div>
+                    </div>
+                  ) : w.state === 'quiet' && w.active_jobs === 0 ? (
+                    <div>
+                      <div>{timeAgo(w.last_heartbeat_at)}</div>
+                      <div className="text-green-600">Drain complete</div>
+                    </div>
+                  ) : (
+                    timeAgo(w.last_heartbeat_at)
+                  )}
+                </td>
                 <td className="px-4 py-3 text-center">
                   <div className="flex gap-1 justify-center">
                     {w.state === 'running' && (
