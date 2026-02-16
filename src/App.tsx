@@ -12,6 +12,7 @@ import { DeadLetterPage } from '@/pages/DeadLetterPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { CronsPage } from '@/pages/CronsPage';
 import { WorkflowsPage } from '@/pages/WorkflowsPage';
+import { WorkflowBuilderPage } from '@/pages/WorkflowBuilderPage';
 import { RateLimitsPage } from '@/pages/RateLimitsPage';
 import { EventsPage } from '@/pages/EventsPage';
 import { UniqueJobsPage } from '@/pages/UniqueJobsPage';
@@ -52,6 +53,7 @@ export function App({ baseUrl = '', basename = '/ojs/admin' }: AppProps) {
             <Route path="workers" element={<WorkersPage />} />
             <Route path="dead-letter" element={<DeadLetterPage />} />
             <Route path="crons" element={<CronsPage />} />
+            <Route path="workflows/builder" element={<WorkflowBuilderPage />} />
             <Route path="workflows" element={<WorkflowsPage />} />
             <Route path="rate-limits" element={<RateLimitsPage />} />
             <Route path="events" element={<EventsPage />} />

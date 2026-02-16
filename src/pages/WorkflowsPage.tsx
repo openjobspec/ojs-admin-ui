@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useClient } from '@/hooks/useAppContext';
 import { usePolling } from '@/hooks/usePolling';
 import { WorkflowTable } from '@/components/workflows/WorkflowTable';
@@ -11,6 +11,7 @@ const STATES = ['pending', 'active', 'completed', 'failed', 'cancelled'];
 
 export function WorkflowsPage() {
   const client = useClient();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const stateFilter = searchParams.get('state') || undefined;
   const page = Number(searchParams.get('page')) || 1;
@@ -39,9 +40,17 @@ export function WorkflowsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Workflows</h1>
-        <button onClick={refresh} className="text-sm px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-800">
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/workflows/builder')}
+            className="text-sm px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
+          >
+            Create Workflow
+          </button>
+          <button onClick={refresh} className="text-sm px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-800">
+            Refresh
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-3 items-center">
