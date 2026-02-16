@@ -10,6 +10,17 @@ import { JobsPage } from '@/pages/JobsPage';
 import { WorkersPage } from '@/pages/WorkersPage';
 import { DeadLetterPage } from '@/pages/DeadLetterPage';
 import { SettingsPage } from '@/pages/SettingsPage';
+import { CronsPage } from '@/pages/CronsPage';
+import { WorkflowsPage } from '@/pages/WorkflowsPage';
+import { RateLimitsPage } from '@/pages/RateLimitsPage';
+import { EventsPage } from '@/pages/EventsPage';
+import { UniqueJobsPage } from '@/pages/UniqueJobsPage';
+import { ScheduledJobsPage } from '@/pages/ScheduledJobsPage';
+import { AuditLogPage } from '@/pages/AuditLogPage';
+import { WebhooksPage } from '@/pages/WebhooksPage';
+import { TenantsPage } from '@/pages/TenantsPage';
+import { PoolsPage } from '@/pages/PoolsPage';
+import { SchemasPage } from '@/pages/SchemasPage';
 
 interface AppProps {
   baseUrl?: string;
@@ -40,6 +51,17 @@ export function App({ baseUrl = '', basename = '/ojs/admin' }: AppProps) {
             <Route path="jobs" element={<JobsPage />} />
             <Route path="workers" element={<WorkersPage />} />
             <Route path="dead-letter" element={<DeadLetterPage />} />
+            <Route path="crons" element={<CronsPage />} />
+            <Route path="workflows" element={<WorkflowsPage />} />
+            <Route path="rate-limits" element={<RateLimitsPage />} />
+            <Route path="events" element={<EventsPage />} />
+            <Route path="unique-jobs" element={<UniqueJobsPage />} />
+            <Route path="scheduled" element={<ScheduledJobsPage />} />
+            <Route path="audit-log" element={<AuditLogPage />} />
+            <Route path="webhooks" element={<WebhooksPage />} />
+            <Route path="tenants" element={<TenantsPage />} />
+            <Route path="pools" element={<PoolsPage />} />
+            <Route path="schemas" element={<SchemasPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Routes>
