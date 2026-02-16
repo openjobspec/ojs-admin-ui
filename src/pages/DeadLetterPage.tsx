@@ -12,7 +12,7 @@ export function DeadLetterPage() {
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
 
   const fetchDLQ = useCallback(() => client.deadLetter({ page, per_page: 25 }), [client, page]);
-  const fetchStats = useCallback(() => client.deadLetterStats().catch(() => null), [client]);
+  const fetchStats = useCallback(() => client.deadLetterStats().catch((err) => { console.warn('Failed to load dead letter stats:', err); return null; }), [client]);
 
   const { data: dlqResp, refresh } = usePolling<PaginatedResponse<JobSummary>>(fetchDLQ);
   const { data: stats } = usePolling<DeadLetterStats | null>(fetchStats, 15000);
