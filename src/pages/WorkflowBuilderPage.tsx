@@ -5,7 +5,7 @@ export function WorkflowBuilderPage() {
   const navigate = useNavigate();
 
   const handleDeploy = (json: object) => {
-    console.log('Deploy workflow:', JSON.stringify(json, null, 2));
+    // TODO(deploy): Send to backend when deploy endpoint is connected
     alert('Workflow JSON logged to console (deploy endpoint not connected yet).');
   };
 
