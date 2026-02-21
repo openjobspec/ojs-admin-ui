@@ -243,3 +243,4 @@ export function QueueConfigModal({ queue, onClose, onSave }: QueueConfigModalPro
     </div>
   );
 }
+
