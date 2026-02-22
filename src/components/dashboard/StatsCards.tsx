@@ -35,3 +35,4 @@ export function StatsCards({ jobs, throughput, queues, workers }: StatsCardsProp
     </div>
   );
 }
+
