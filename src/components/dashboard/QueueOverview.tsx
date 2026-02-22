@@ -55,3 +55,4 @@ export function QueueOverview({ queues }: { queues: QueueSummary[] }) {
     </div>
   );
 }
+
