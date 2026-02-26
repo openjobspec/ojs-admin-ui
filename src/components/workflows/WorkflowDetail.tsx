@@ -3,6 +3,7 @@ import { useClient } from '@/hooks/useAppContext';
 import { useKeyboard } from '@/hooks/useKeyboard';
 import type { WorkflowDetail as WorkflowDetailType, WorkflowProgress } from '@/api/types';
 import { JsonViewer } from '@/components/common/JsonViewer';
+import { DAGVisualizer } from '@/components/workflows/DAGVisualizer';
 import { timeAgo } from '@/lib/formatting';
 
 interface WorkflowDetailProps {
@@ -121,6 +122,14 @@ export function WorkflowDetail({ workflowId, onClose }: WorkflowDetailProps) {
                   </div>
                 ))}
               </div>
+            </section>
+          )}
+
+          {/* DAG Visualization */}
+          {workflow.steps.length > 0 && (
+            <section>
+              <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">Workflow Graph</h3>
+              <DAGVisualizer steps={workflow.steps} workflowState={workflow.state} />
             </section>
           )}
 
