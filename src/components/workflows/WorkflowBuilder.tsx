@@ -15,6 +15,7 @@ import {
   Position,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { WorkflowCodeGen } from './WorkflowCodeGen';
 
 /* ---------- types ---------- */
 type WorkflowType = 'chain' | 'group' | 'batch';
@@ -326,6 +327,12 @@ export function WorkflowBuilder({ onDeploy }: { onDeploy?: (json: object) => voi
             {JSON.stringify(ojsJson, null, 2)}
           </pre>
         </div>
+
+        {/* SDK Code Generation */}
+        <WorkflowCodeGen
+          steps={steps.map(s => ({ jobType: s.jobType, args: s.args }))}
+          workflowType={workflowType}
+        />
       </div>
     </div>
   );
