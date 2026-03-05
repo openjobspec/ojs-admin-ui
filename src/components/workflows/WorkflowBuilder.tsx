@@ -158,7 +158,7 @@ function generateOJS(
 }
 
 /* ---------- main component ---------- */
-export function WorkflowBuilder({ onDeploy }: { onDeploy?: (json: object) => void }) {
+export function WorkflowBuilder({ onDeploy, deploying }: { onDeploy?: (json: object) => void; deploying?: boolean }) {
   const [workflowType, setWorkflowType] = useState<WorkflowType>('chain');
   const [steps, setSteps] = useState<{ id: string; jobType: string; args: string }[]>([]);
   const [editingStep, setEditingStep] = useState<string | null>(null);
@@ -279,9 +279,10 @@ export function WorkflowBuilder({ onDeploy }: { onDeploy?: (json: object) => voi
         {onDeploy && steps.length > 0 && (
           <button
             onClick={() => onDeploy(ojsJson)}
-            className="w-full text-sm px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+            disabled={deploying}
+            className="w-full text-sm px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Deploy Workflow
+            {deploying ? 'Deploying…' : 'Deploy Workflow'}
           </button>
         )}
       </div>

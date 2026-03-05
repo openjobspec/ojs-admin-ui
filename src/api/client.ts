@@ -215,6 +215,13 @@ export class OJSAdminClient {
     return this.request(`/ojs/v1/workflows/${encodeURIComponent(id)}`);
   }
 
+  createWorkflow(definition: object): Promise<WorkflowDetail> {
+    return this.request(`/ojs/v1/workflows`, {
+      method: 'POST',
+      body: JSON.stringify(definition),
+    });
+  }
+
   cancelWorkflow(id: string): Promise<void> {
     return this.request(`/ojs/v1/workflows/${encodeURIComponent(id)}/cancel`, { method: 'POST' });
   }

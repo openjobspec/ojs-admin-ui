@@ -1,12 +1,26 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useClient } from '@/hooks/useAppContext';
 import { WorkflowBuilder } from '@/components/workflows/WorkflowBuilder';
 
 export function WorkflowBuilderPage() {
   const navigate = useNavigate();
+  const client = useClient();
+  const [deploying, setDeploying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleDeploy = (json: object) => {
-    // TODO(deploy): Send to backend when deploy endpoint is connected
-    alert('Workflow JSON logged to console (deploy endpoint not connected yet).');
+  const handleDeploy = async (json: object) => {
+    setDeploying(true);
+    setError(null);
+    try {
+      const workflow = await client.createWorkflow(json);
+      navigate(`/workflows/${workflow.id}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to deploy workflow';
+      setError(message);
+    } finally {
+      setDeploying(false);
+    }
   };
 
   return (
@@ -23,7 +37,13 @@ export function WorkflowBuilderPage() {
         </div>
       </div>
 
-      <WorkflowBuilder onDeploy={handleDeploy} />
+      {error && (
+        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-red-700 dark:text-red-300 text-sm">
+          {error}
+        </div>
+      )}
+
+      <WorkflowBuilder onDeploy={handleDeploy} deploying={deploying} />
     </div>
   );
 }
