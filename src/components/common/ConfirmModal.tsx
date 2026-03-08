@@ -9,9 +9,10 @@ interface ConfirmModalProps {
   onConfirm: () => void | Promise<void>;
   onCancel: () => void;
   destructive?: boolean;
+  children?: React.ReactNode;
 }
 
-export function ConfirmModal({ open, title, message, confirmLabel = 'Confirm', onConfirm, onCancel, destructive }: ConfirmModalProps) {
+export function ConfirmModal({ open, title, message, confirmLabel = 'Confirm', onConfirm, onCancel, destructive, children }: ConfirmModalProps) {
   const [loading, setLoading] = useState(false);
 
   useKeyboard('Escape', onCancel);
@@ -29,7 +30,8 @@ export function ConfirmModal({ open, title, message, confirmLabel = 'Confirm', o
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" onClick={(e) => e.stopPropagation()}>
         <h3 id="confirm-modal-title" className="text-lg font-semibold mb-2">{title}</h3>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">{message}</p>
-        <div className="flex justify-end gap-3">
+        {children}
+        <div className="flex justify-end gap-3 mt-4">
           <button
             onClick={onCancel}
             className="px-4 py-2 text-sm rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
