@@ -1,20 +1,28 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useManifest, useClient } from '@/hooks/useAppContext';
 import { usePolling } from '@/hooks/usePolling';
 import { conformanceBadge } from '@/api/manifest';
 import { JsonViewer } from '@/components/common/JsonViewer';
 import { MiddlewareList } from '@/components/settings/MiddlewareList';
-import type { MiddlewareEntry } from '@/api/types';
+import { ConfirmModal } from '@/components/common/ConfirmModal';
+import type { MaintenanceStatus, MiddlewareEntry } from '@/api/types';
 
 export function SettingsPage() {
   const manifest = useManifest();
   const client = useClient();
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [maintenanceReason, setMaintenanceReason] = useState('');
 
   const fetchMiddleware = useCallback(
     () => client.middleware().catch((err) => { console.warn('Failed to load middleware:', err); return { enqueue: [], execution: [] }; }),
     [client],
   );
+  const fetchMaintenance = useCallback(
+    () => client.maintenanceStatus().catch(() => null),
+    [client],
+  );
   const { data: middleware } = usePolling<{ enqueue: MiddlewareEntry[]; execution: MiddlewareEntry[] }>(fetchMiddleware, 30000);
+  const { data: maintenance, refresh: refreshMaintenance } = usePolling<MaintenanceStatus | null>(fetchMaintenance, 10000);
 
   if (!manifest) return <p className="text-gray-500" role="status" aria-live="polite">Loading manifest…</p>;
 
@@ -37,6 +45,37 @@ export function SettingsPage() {
         <Row label="Conformance" value={conformanceBadge(manifest.conformance_level)} />
         {manifest.conformance_tier && <Row label="Tier" value={manifest.conformance_tier} />}
         <Row label="Protocols" value={manifest.protocols.join(', ')} />
+      </section>
+
+      {/* Maintenance Mode */}
+      <section className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase">Maintenance Mode</h2>
+          {maintenance?.enabled ? (
+            <button
+              onClick={async () => { await client.setMaintenance(false); refreshMaintenance(); }}
+              className="text-xs px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+              Disable Maintenance
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowMaintenanceModal(true)}
+              className="text-xs px-3 py-1.5 bg-amber-600 text-white rounded hover:bg-amber-700"
+            >
+              Enable Maintenance
+            </button>
+          )}
+        </div>
+        {maintenance?.enabled && (
+          <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded p-3 text-sm">
+            <p className="font-medium text-amber-800 dark:text-amber-200">Maintenance mode is active</p>
+            {maintenance.reason && <p className="text-amber-700 dark:text-amber-300 mt-1">{maintenance.reason}</p>}
+          </div>
+        )}
+        {!maintenance?.enabled && (
+          <p className="text-sm text-gray-500">System is operating normally. Enable maintenance mode to stop processing new jobs.</p>
+        )}
       </section>
 
       {/* Capabilities */}
@@ -91,6 +130,32 @@ export function SettingsPage() {
         <h2 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase mb-2">Raw Manifest</h2>
         <JsonViewer data={manifest} />
       </section>
+
+      {/* Maintenance Mode Modal */}
+      <ConfirmModal
+        open={showMaintenanceModal}
+        title="Enable Maintenance Mode"
+        message="This will stop the server from accepting new jobs. Active jobs will continue to completion."
+        confirmLabel="Enable"
+        onConfirm={async () => {
+          await client.setMaintenance(true, maintenanceReason || undefined);
+          setShowMaintenanceModal(false);
+          setMaintenanceReason('');
+          refreshMaintenance();
+        }}
+        onCancel={() => { setShowMaintenanceModal(false); setMaintenanceReason(''); }}
+      >
+        <label className="block text-sm text-gray-600 dark:text-gray-400 mt-3">
+          Reason (optional)
+          <input
+            type="text"
+            value={maintenanceReason}
+            onChange={(e) => setMaintenanceReason(e.target.value)}
+            placeholder="e.g., Database migration in progress"
+            className="mt-1 block w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+          />
+        </label>
+      </ConfirmModal>
     </div>
   );
 }
