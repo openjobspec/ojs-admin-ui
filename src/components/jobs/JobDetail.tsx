@@ -6,6 +6,10 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { JsonViewer } from '@/components/common/JsonViewer';
 import { timeAgo } from '@/lib/formatting';
 
+const PROGRESS_POLL_INTERVAL_MS = 2000;
+
+type ConnectionMode = 'sse' | 'polling' | null;
+
 interface JobDetailProps {
   jobId: string;
   onClose: () => void;
@@ -17,6 +21,8 @@ export function JobDetail({ jobId, onClose }: JobDetailProps) {
   const [progress, setProgress] = useState<JobProgress | null>(null);
   const [fetchedResult, setFetchedResult] = useState<JobResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [progressError, setProgressError] = useState<string | null>(null);
+  const [connectionMode, setConnectionMode] = useState<ConnectionMode>(null);
 
   useKeyboard('Escape', onClose);
 
@@ -25,7 +31,11 @@ export function JobDetail({ jobId, onClose }: JobDetailProps) {
       const jobData = await client.job(jobId);
       setJob(jobData);
       if (jobData.state === 'active') {
-        client.jobProgress(jobId).then(setProgress).catch(() => setProgress(null));
+        client.jobProgress(jobId).then(setProgress).catch((err) => {
+          console.error('[OJS Admin] Failed to fetch job progress:', err);
+          setProgress(null);
+          setProgressError('Failed to load progress');
+        });
       }
     }
     catch (e) { setError(String(e)); }
@@ -43,25 +53,43 @@ export function JobDetail({ jobId, onClose }: JobDetailProps) {
 
     try {
       es = new EventSource(sseUrl);
+      setConnectionMode('sse');
       es.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data) as JobProgress;
           setProgress(data);
+          setProgressError(null);
         } catch { /* ignore parse errors */ }
       };
       es.onerror = () => {
         // SSE not supported or failed — fall back to polling
         es?.close();
         es = null;
+        console.warn('[OJS Admin] SSE connection lost, falling back to polling');
+        setConnectionMode('polling');
         pollInterval = setInterval(() => {
-          client.jobProgress(jobId).then(setProgress).catch(() => {});
-        }, 2000);
+          client.jobProgress(jobId).then((data) => {
+            setProgress(data);
+            setProgressError(null);
+          }).catch((err) => {
+            console.error('[OJS Admin] Progress poll failed:', err);
+            setProgressError('Failed to fetch progress');
+          });
+        }, PROGRESS_POLL_INTERVAL_MS);
       };
     } catch {
       // EventSource constructor failed — fall back to polling
+      console.warn('[OJS Admin] EventSource unavailable, using polling');
+      setConnectionMode('polling');
       pollInterval = setInterval(() => {
-        client.jobProgress(jobId).then(setProgress).catch(() => {});
-      }, 2000);
+        client.jobProgress(jobId).then((data) => {
+          setProgress(data);
+          setProgressError(null);
+        }).catch((err) => {
+          console.error('[OJS Admin] Progress poll failed:', err);
+          setProgressError('Failed to fetch progress');
+        });
+      }, PROGRESS_POLL_INTERVAL_MS);
     }
 
     return () => {
@@ -136,7 +164,12 @@ export function JobDetail({ jobId, onClose }: JobDetailProps) {
           {/* Progress (for active jobs) */}
           {progress && (
             <section>
-              <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">Progress</h3>
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase">Progress</h3>
+                {connectionMode === 'polling' && (
+                  <span className="text-[10px] text-amber-600 dark:text-amber-400">● Polling</span>
+                )}
+              </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
                   <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -159,6 +192,10 @@ export function JobDetail({ jobId, onClose }: JobDetailProps) {
                 )}
               </div>
             </section>
+          )}
+
+          {progressError && (
+            <p className="text-xs text-amber-600 dark:text-amber-400">{progressError}</p>
           )}
 
           {/* Timestamps */}
@@ -221,7 +258,10 @@ export function JobDetail({ jobId, onClose }: JobDetailProps) {
           {job.result == null && !fetchedResult && job.state === 'completed' && (
             <section>
               <button
-                onClick={() => client.jobResult(jobId).then(setFetchedResult).catch(() => {})}
+                onClick={() => client.jobResult(jobId).then(setFetchedResult).catch((err) => {
+                  console.error('[OJS Admin] Failed to fetch job result:', err);
+                  setProgressError('Failed to fetch result');
+                })}
                 className="text-xs px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 Fetch Result
