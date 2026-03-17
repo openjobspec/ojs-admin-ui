@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from '@/components/shell/Layout';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { AppContext } from '@/hooks/useAppContext';
 import { OJSAdminClient } from '@/api/client';
 import type { OJSManifest } from '@/api/types';
@@ -44,30 +45,32 @@ export function App({ baseUrl = '', basename = '/ojs/admin' }: AppProps) {
 
   return (
     <AppContext.Provider value={{ client, manifest, baseUrl, connected }}>
-      <BrowserRouter basename={basename}>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route index element={<DashboardPage />} />
-            <Route path="queues" element={<QueuesPage />} />
-            <Route path="jobs" element={<JobsPage />} />
-            <Route path="workers" element={<WorkersPage />} />
-            <Route path="dead-letter" element={<DeadLetterPage />} />
-            <Route path="crons" element={<CronsPage />} />
-            <Route path="workflows/builder" element={<WorkflowBuilderPage />} />
-            <Route path="workflows" element={<WorkflowsPage />} />
-            <Route path="rate-limits" element={<RateLimitsPage />} />
-            <Route path="events" element={<EventsPage />} />
-            <Route path="unique-jobs" element={<UniqueJobsPage />} />
-            <Route path="scheduled" element={<ScheduledJobsPage />} />
-            <Route path="audit-log" element={<AuditLogPage />} />
-            <Route path="webhooks" element={<WebhooksPage />} />
-            <Route path="tenants" element={<TenantsPage />} />
-            <Route path="pools" element={<PoolsPage />} />
-            <Route path="schemas" element={<SchemasPage />} />
-            <Route path="settings" element={<SettingsPage />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+      <ErrorBoundary>
+        <BrowserRouter basename={basename}>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route index element={<DashboardPage />} />
+              <Route path="queues" element={<QueuesPage />} />
+              <Route path="jobs" element={<JobsPage />} />
+              <Route path="workers" element={<WorkersPage />} />
+              <Route path="dead-letter" element={<DeadLetterPage />} />
+              <Route path="crons" element={<CronsPage />} />
+              <Route path="workflows/builder" element={<WorkflowBuilderPage />} />
+              <Route path="workflows" element={<WorkflowsPage />} />
+              <Route path="rate-limits" element={<RateLimitsPage />} />
+              <Route path="events" element={<EventsPage />} />
+              <Route path="unique-jobs" element={<UniqueJobsPage />} />
+              <Route path="scheduled" element={<ScheduledJobsPage />} />
+              <Route path="audit-log" element={<AuditLogPage />} />
+              <Route path="webhooks" element={<WebhooksPage />} />
+              <Route path="tenants" element={<TenantsPage />} />
+              <Route path="pools" element={<PoolsPage />} />
+              <Route path="schemas" element={<SchemasPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </ErrorBoundary>
     </AppContext.Provider>
   );
 }
