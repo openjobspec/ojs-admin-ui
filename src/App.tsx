@@ -23,6 +23,8 @@ import { WebhooksPage } from '@/pages/WebhooksPage';
 import { TenantsPage } from '@/pages/TenantsPage';
 import { PoolsPage } from '@/pages/PoolsPage';
 import { SchemasPage } from '@/pages/SchemasPage';
+import { MirrorPage } from '@/pages/MirrorPage';
+import { AttestAuditPage } from '@/pages/AttestAuditPage';
 
 interface AppProps {
   baseUrl?: string;
@@ -66,6 +68,8 @@ export function App({ baseUrl = '', basename = '/ojs/admin' }: AppProps) {
               <Route path="tenants" element={<TenantsPage />} />
               <Route path="pools" element={<PoolsPage />} />
               <Route path="schemas" element={<SchemasPage />} />
+              <Route path="mirror" element={<MirrorPage />} />
+              <Route path="attestation" element={<AttestAuditPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Routes>

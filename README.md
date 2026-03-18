@@ -1,4 +1,5 @@
 # OJS Admin UI
+[![Stability: beta](https://img.shields.io/badge/stability-beta-yellow.svg)](https://github.com/openjobspec/openjobspec/blob/main/STABILITY.md)
 
 Universal admin dashboard for any [Open Job Spec](https://openjobspec.org) conformant backend.
 
