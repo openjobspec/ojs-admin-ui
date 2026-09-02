@@ -1,37 +1,9 @@
 import { useState, useEffect } from 'react';
 import { timeAgo } from '@/lib/formatting';
+import { getAuditLog, clearAuditLog, type AuditEntry } from '@/lib/auditLog';
 
-interface AuditEntry {
-  id: string;
-  action: string;
-  filter: Record<string, unknown>;
-  result: { matched: number; succeeded: number; failed: number };
-  performed_at: string;
-}
-
-const STORAGE_KEY = 'ojs-admin-audit-log';
-
-export function getAuditLog(): AuditEntry[] {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) as AuditEntry[] : [];
-  } catch {
-    return [];
-  }
-}
-
-export function addAuditEntry(action: string, filter: Record<string, unknown>, result: { matched: number; succeeded: number; failed: number }): void {
-  const entries = getAuditLog();
-  entries.unshift({
-    id: crypto.randomUUID(),
-    action,
-    filter,
-    result,
-    performed_at: new Date().toISOString(),
-  });
-  // Keep last 100 entries
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(entries.slice(0, 100)));
-}
+// Re-exported for backwards compatibility with existing internal imports.
+export { getAuditLog, addAuditEntry } from '@/lib/auditLog';
 
 export function AuditLogPage() {
   const [entries, setEntries] = useState<AuditEntry[]>([]);
@@ -47,7 +19,7 @@ export function AuditLogPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Bulk Operations Audit Log</h1>
         <button
-          onClick={() => { sessionStorage.removeItem(STORAGE_KEY); setEntries([]); }}
+          onClick={() => { clearAuditLog(); setEntries([]); }}
           className="text-sm px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
         >
           Clear Log
