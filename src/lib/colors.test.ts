@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import { STATE_COLORS, STATE_BG } from './colors';
 import type { JobState } from '@/api/types';
