@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useClient } from '@/hooks/useAppContext';
-import { useKeyboard } from '@/hooks/useKeyboard';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import type { JobDetail as JobDetailType, JobProgress, JobResult } from '@/api/types';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { JsonViewer } from '@/components/common/JsonViewer';
@@ -24,7 +24,7 @@ export function JobDetail({ jobId, onClose }: JobDetailProps) {
   const [progressError, setProgressError] = useState<string | null>(null);
   const [connectionMode, setConnectionMode] = useState<ConnectionMode>(null);
 
-  useKeyboard('Escape', onClose);
+  const dialogRef = useFocusTrap<HTMLDivElement>(!!job, { onEscape: onClose });
 
   const load = useCallback(async () => {
     try {
@@ -110,14 +110,21 @@ export function JobDetail({ jobId, onClose }: JobDetailProps) {
 
   return (
     <div className="fixed inset-0 z-40 flex">
-      <div className="flex-1 bg-black/30" onClick={onClose} />
-      <div className="w-full max-w-xl bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 overflow-auto">
+      <div className="flex-1 bg-black/30" onClick={onClose} role="presentation" />
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Job details: ${job.type}`}
+        className="w-full max-w-xl bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 overflow-auto overscroll-contain focus:outline-none"
+      >
         <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between">
           <div>
             <h2 className="font-semibold">{job.type}</h2>
             <p className="text-xs text-gray-500 font-mono">{job.id}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+          <button onClick={onClose} aria-label="Close job details" className="text-gray-400 hover:text-gray-600 text-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded">×</button>
         </div>
 
         <div className="p-4 space-y-4">
@@ -290,4 +297,3 @@ function Row({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
