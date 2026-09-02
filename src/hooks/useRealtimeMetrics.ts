@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useClient } from '@/hooks/useAppContext';
+import { reconnectDelay, appendSample, isAnomaly, deriveThroughput } from '@/lib/metrics';
 import type {
   ConnectionInfo,
   RealtimeMetrics,
@@ -13,14 +14,6 @@ import type {
 const DEFAULT_POLL_INTERVAL = 3000;
 const DEFAULT_MAX_SAMPLES = 60;
 const DEFAULT_MAX_RECONNECT = 10;
-const BASE_RECONNECT_DELAY = 1000;
-const MAX_RECONNECT_DELAY = 30000;
-
-function reconnectDelay(attempt: number): number {
-  const delay = Math.min(BASE_RECONNECT_DELAY * Math.pow(2, attempt), MAX_RECONNECT_DELAY);
-  // Add jitter ±25%
-  return delay * (0.75 + Math.random() * 0.5);
-}
 
 const INITIAL_METRICS: RealtimeMetrics = {
   queueDepths: [],
@@ -61,12 +54,13 @@ export function useRealtimeMetrics(options: UseRealtimeMetricsOptions = {}) {
   const prevProcessedRef = useRef<number | null>(null);
   const prevFailedRef = useRef<number | null>(null);
   const prevTimestampRef = useRef<number | null>(null);
+  // Always points at the latest startPolling so connectSSE can invoke the
+  // current fallback without listing it as a dependency (avoids a stale closure
+  // while keeping connectSSE's identity stable).
+  const startPollingRef = useRef<() => void>(() => {});
 
-  const appendSample = useCallback(
-    <T>(arr: T[], sample: T) => {
-      const next = [...arr, sample];
-      return next.length > maxSamples ? next.slice(-maxSamples) : next;
-    },
+  const append = useCallback(
+    <T,>(arr: T[], sample: T) => appendSample(arr, sample, maxSamples),
     [maxSamples],
   );
 
@@ -97,23 +91,19 @@ export function useRealtimeMetrics(options: UseRealtimeMetricsOptions = {}) {
       };
 
       setMetrics((prev) => {
-        const recentRates = prev.errorRate.slice(-10).map((s) => s.errorRate);
-        const avgRate = recentRates.length > 0
-          ? recentRates.reduce((a, b) => a + b, 0) / recentRates.length
-          : 0;
-        errorSample.isAnomaly = avgRate > 0 && errorRate > avgRate * 2;
+        errorSample.isAnomaly = isAnomaly(prev.errorRate.slice(-10).map((s) => s.errorRate), errorRate);
 
         return {
           queueDepths: data.queues,
-          throughput: appendSample(prev.throughput, throughputSample),
+          throughput: append(prev.throughput, throughputSample),
           workers: data.workers.active,
-          errorRate: appendSample(prev.errorRate, errorSample),
+          errorRate: append(prev.errorRate, errorSample),
           totalActiveJobs: data.queues.reduce((s, q) => s + q.active, 0),
           totalWorkers: data.workers.total,
         };
       });
     },
-    [appendSample],
+    [append],
   );
 
   const processPolledStats = useCallback(
@@ -122,18 +112,18 @@ export function useRealtimeMetrics(options: UseRealtimeMetricsOptions = {}) {
       const processedPerSec = stats.throughput.processed_per_minute / 60;
       const failedPerSec = stats.throughput.failed_per_minute / 60;
 
-      // Derive per-second rates from delta if we have previous data
-      let derivedProcessed = processedPerSec;
-      let derivedFailed = failedPerSec;
+      // Derive per-second rates from the counter delta when we have a prior sample.
       const completed = stats.jobs.completed ?? 0;
       const discarded = stats.jobs.discarded ?? 0;
-      if (prevTimestampRef.current !== null && prevProcessedRef.current !== null && prevFailedRef.current !== null) {
-        const dt = (now - prevTimestampRef.current) / 1000;
-        if (dt > 0) {
-          derivedProcessed = Math.max(0, (completed - prevProcessedRef.current) / dt) || processedPerSec;
-          derivedFailed = Math.max(0, (discarded - prevFailedRef.current) / dt) || failedPerSec;
-        }
-      }
+      const prevCounters =
+        prevTimestampRef.current !== null && prevProcessedRef.current !== null && prevFailedRef.current !== null
+          ? { completed: prevProcessedRef.current, discarded: prevFailedRef.current, timestamp: prevTimestampRef.current }
+          : null;
+      const { processedPerSec: derivedProcessed, failedPerSec: derivedFailed } = deriveThroughput(
+        prevCounters,
+        { completed, discarded, timestamp: now },
+        { processedPerSec, failedPerSec },
+      );
       prevProcessedRef.current = completed;
       prevFailedRef.current = discarded;
       prevTimestampRef.current = now;
@@ -158,22 +148,18 @@ export function useRealtimeMetrics(options: UseRealtimeMetricsOptions = {}) {
       };
 
       setMetrics((prev) => {
-        const recentRates = prev.errorRate.slice(-10).map((s) => s.errorRate);
-        const avgRate = recentRates.length > 0
-          ? recentRates.reduce((a, b) => a + b, 0) / recentRates.length
-          : 0;
-        errorSample.isAnomaly = avgRate > 0 && errorRate > avgRate * 2;
+        errorSample.isAnomaly = isAnomaly(prev.errorRate.slice(-10).map((s) => s.errorRate), errorRate);
 
         return {
           ...prev,
-          throughput: appendSample(prev.throughput, throughputSample),
-          errorRate: appendSample(prev.errorRate, errorSample),
+          throughput: append(prev.throughput, throughputSample),
+          errorRate: append(prev.errorRate, errorSample),
           totalActiveJobs: stats.jobs.active ?? 0,
           totalWorkers: stats.workers,
         };
       });
     },
-    [appendSample],
+    [append],
   );
 
   // Also poll queue depths separately for polling fallback
@@ -281,7 +267,7 @@ export function useRealtimeMetrics(options: UseRealtimeMetricsOptions = {}) {
           lastConnectedAt: Date.now(),
           error: null,
         });
-        startPolling();
+        startPollingRef.current();
       }
     };
   }, [client, sseUrl, maxReconnectAttempts, processMetricsData]);
@@ -314,6 +300,9 @@ export function useRealtimeMetrics(options: UseRealtimeMetricsOptions = {}) {
     poll();
     pollTimerRef.current = setInterval(poll, pollInterval);
   }, [client, pollInterval, processPolledStats, pollQueues]);
+
+  // Keep the ref pointed at the latest startPolling for connectSSE's fallback.
+  startPollingRef.current = startPolling;
 
   // Cleanup helper
   const cleanup = useCallback(() => {
