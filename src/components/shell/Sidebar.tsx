@@ -35,7 +35,7 @@ export function Sidebar() {
           </p>
         )}
       </div>
-      <nav className="flex-1 py-2">
+      <nav className="flex-1 py-2" aria-label="Primary">
         {navItems.map((item) => {
           if (item.capability && manifest && !hasCapability(manifest, item.capability) && !hasExtension(manifest, item.capability)) return null;
           return (
@@ -51,7 +51,7 @@ export function Sidebar() {
               }
               end={item.to === '/'}
             >
-              <span className="text-base">{item.icon}</span>
+              <span className="text-base" aria-hidden="true">{item.icon}</span>
               {item.label}
             </NavLink>
           );
