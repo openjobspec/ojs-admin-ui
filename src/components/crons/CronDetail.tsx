@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useClient } from '@/hooks/useAppContext';
-import { useKeyboard } from '@/hooks/useKeyboard';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import type { CronJob } from '@/api/types';
 import { JsonViewer } from '@/components/common/JsonViewer';
 
@@ -14,7 +14,7 @@ export function CronDetail({ cronId, onClose }: CronDetailProps) {
   const [cron, setCron] = useState<CronJob | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useKeyboard('Escape', onClose);
+  const dialogRef = useFocusTrap<HTMLDivElement>(!!cron, { onEscape: onClose });
 
   const load = useCallback(async () => {
     try { setCron(await client.cron(cronId)); }
@@ -29,13 +29,13 @@ export function CronDetail({ cronId, onClose }: CronDetailProps) {
   return (
     <div className="fixed inset-0 z-40 flex">
       <div className="flex-1 bg-black/30" onClick={onClose} />
-      <div className="w-full max-w-xl bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 overflow-auto">
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Cron details" className="w-full max-w-xl bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 overflow-auto focus:outline-none">
         <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between">
           <div>
             <h2 className="font-semibold">{cron.name ?? cron.type}</h2>
             <p className="text-xs text-gray-500 font-mono">{cron.id}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+          <button onClick={onClose} aria-label="Close cron details" className="text-gray-400 hover:text-gray-600 text-xl">×</button>
         </div>
 
         <div className="p-4 space-y-4">
@@ -94,4 +94,3 @@ function Row({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-

@@ -1,5 +1,5 @@
 # OJS Admin UI
-[![Stability: beta](https://img.shields.io/badge/stability-beta-yellow.svg)](https://github.com/openjobspec/openjobspec/blob/main/STABILITY.md)
+[![Stability: beta](https://img.shields.io/badge/stability-beta-yellow.svg)](https://openjobspec.org/governance/stability/)
 
 Universal admin dashboard for any [Open Job Spec](https://openjobspec.org) conformant backend.
 
@@ -42,7 +42,7 @@ const unmount = mountOJSAdmin(document.getElementById('admin'), {
 ```bash
 git clone https://github.com/openjobspec/ojs-admin-ui
 cd ojs-admin-ui
-npm install
+npm ci
 npm run dev
 ```
 
@@ -65,7 +65,7 @@ The admin UI is a pure SPA (React + Vite + Tailwind). No server component. Backe
 
 ## API Contract
 
-The UI consumes the [OJS Admin API Specification](../spec/spec/ojs-admin-api.md):
+The UI consumes the [OJS Admin API Specification](https://github.com/openjobspec/spec/blob/main/spec/ojs-admin-api.md):
 
 | Endpoint | Used By |
 |----------|---------|
@@ -90,4 +90,3 @@ Bundle size: ~370KB gzipped.
 ## License
 
 Apache 2.0
-

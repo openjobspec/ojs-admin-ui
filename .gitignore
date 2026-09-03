@@ -2,4 +2,11 @@ node_modules/
 dist/
 dist-app/
 coverage/
+.package-smoke/
 tsconfig.tsbuildinfo
+
+# `src/lib/` contains source utilities (colors, formatting, metrics, auditLog).
+# Some global/core excludes ignore any directory named `lib/`; re-include ours
+# so these tracked source files are never accidentally dropped.
+!src/lib/
+!src/lib/**

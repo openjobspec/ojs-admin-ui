@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useClient } from '@/hooks/useAppContext';
-import { useKeyboard } from '@/hooks/useKeyboard';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 const AVAILABLE_EVENTS = [
   'job.enqueued', 'job.started', 'job.completed', 'job.failed', 'job.retried', 'job.cancelled', 'job.discarded',
@@ -23,7 +23,7 @@ export function CreateWebhookModal({ onClose, onCreated }: CreateWebhookModalPro
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useKeyboard('Escape', onClose);
+  const dialogRef = useFocusTrap<HTMLDivElement>(true, { onEscape: onClose });
 
   const toggleEvent = (e: string) => {
     setEvents((prev) => prev.includes(e) ? prev.filter((x) => x !== e) : [...prev, e]);
@@ -46,8 +46,16 @@ export function CreateWebhookModal({ onClose, onCreated }: CreateWebhookModalPro
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full p-6" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-lg font-semibold mb-4">Create Webhook Subscription</h3>
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="create-webhook-title"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full p-6 focus:outline-none"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 id="create-webhook-title" className="text-lg font-semibold mb-4">Create Webhook Subscription</h3>
 
         {error && (
           <div className="mb-4 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded text-sm text-red-600">

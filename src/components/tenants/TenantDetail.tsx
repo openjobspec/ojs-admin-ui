@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useClient } from '@/hooks/useAppContext';
-import { useKeyboard } from '@/hooks/useKeyboard';
 import { usePolling } from '@/hooks/usePolling';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import type { Tenant, PaginatedResponse, JobSummary } from '@/api/types';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { JsonViewer } from '@/components/common/JsonViewer';
@@ -17,7 +17,7 @@ export function TenantDetail({ tenantId, onClose }: TenantDetailProps) {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useKeyboard('Escape', onClose);
+  const dialogRef = useFocusTrap<HTMLDivElement>(!!tenant, { onEscape: onClose });
 
   const load = useCallback(async () => {
     try { setTenant(await client.tenant(tenantId)); }
@@ -38,13 +38,13 @@ export function TenantDetail({ tenantId, onClose }: TenantDetailProps) {
   return (
     <div className="fixed inset-0 z-40 flex">
       <div className="flex-1 bg-black/30" onClick={onClose} />
-      <div className="w-full max-w-xl bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 overflow-auto">
+      <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Tenant details" className="w-full max-w-xl bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 overflow-auto focus:outline-none">
         <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between">
           <div>
             <h2 className="font-semibold">{tenant.name}</h2>
             <p className="text-xs text-gray-500 font-mono">{tenant.id}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+          <button onClick={onClose} aria-label="Close tenant details" className="text-gray-400 hover:text-gray-600 text-xl">×</button>
         </div>
 
         <div className="p-4 space-y-4">

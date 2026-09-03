@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { DeadLetterStats, JobSummary } from '@/api/types';
 import { useClient } from '@/hooks/useAppContext';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ConfirmModal } from '@/components/common/ConfirmModal';
 import { timeAgo, formatNumber } from '@/lib/formatting';
+import { addAuditEntry } from '@/lib/auditLog';
 
 interface DeadLetterListProps {
   jobs: JobSummary[];
@@ -16,17 +17,42 @@ export function DeadLetterList({ jobs, stats, onRefresh, onSelect }: DeadLetterL
   const client = useClient();
   const [showBulk, setShowBulk] = useState(false);
   const [acting, setActing] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<JobSummary | null>(null);
+  const mountedRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const retryOne = async (id: string) => {
     setActing(id);
-    try { await client.retryDeadLetter(id); onRefresh(); }
-    finally { setActing(null); }
+    try {
+      await client.retryDeadLetter(id);
+      if (!mountedRef.current) return;
+      addAuditEntry('dead_letter.retry', { id }, { matched: 1, succeeded: 1, failed: 0 });
+      onRefresh();
+    }
+    finally {
+      if (mountedRef.current) setActing(null);
+    }
   };
 
-  const deleteOne = async (id: string) => {
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    const id = pendingDelete.id;
     setActing(id);
-    try { await client.deleteDeadLetter(id); onRefresh(); }
-    finally { setActing(null); }
+    try {
+      await client.deleteDeadLetter(id);
+      if (!mountedRef.current) return;
+      addAuditEntry('dead_letter.delete', { id }, { matched: 1, succeeded: 1, failed: 0 });
+      onRefresh();
+      setPendingDelete(null);
+    } finally {
+      if (mountedRef.current) setActing(null);
+    }
   };
 
   return (
@@ -143,7 +169,7 @@ export function DeadLetterList({ jobs, stats, onRefresh, onSelect }: DeadLetterL
                       Retry
                     </button>
                     <button
-                      onClick={() => deleteOne(job.id)}
+                      onClick={() => setPendingDelete(job)}
                       disabled={acting === job.id}
                       className="text-xs px-2 py-1 rounded border border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-40"
                       aria-label={`Delete job ${job.id.substring(0, 12)}`}
@@ -166,8 +192,34 @@ export function DeadLetterList({ jobs, stats, onRefresh, onSelect }: DeadLetterL
         title="Bulk Retry All Dead Letter Jobs"
         message={`This will retry all ${stats?.total ?? 0} dead letter jobs. Are you sure?`}
         confirmLabel="Retry All"
-        onConfirm={async () => { await client.bulkRetryDeadLetter({}); setShowBulk(false); onRefresh(); }}
+        confirmingLabel="Retrying…"
+        onConfirm={async () => {
+          const result = await client.bulkRetryDeadLetter({});
+          if (!mountedRef.current) return;
+          addAuditEntry(
+            'dead_letter.bulk_retry',
+            {},
+            { matched: result.matched, succeeded: result.succeeded, failed: result.failed },
+          );
+          setShowBulk(false);
+          onRefresh();
+        }}
         onCancel={() => setShowBulk(false)}
+      />
+
+      <ConfirmModal
+        open={pendingDelete !== null}
+        title="Delete Dead Letter Job"
+        message={
+          pendingDelete
+            ? `Permanently delete job ${pendingDelete.id.substring(0, 12)}… (${pendingDelete.type})? This cannot be undone.`
+            : ''
+        }
+        confirmLabel="Delete"
+        confirmingLabel="Deleting…"
+        destructive
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
       />
     </>
   );

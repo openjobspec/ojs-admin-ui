@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import { hasCapability, hasExtension, supportsAdminApi, conformanceBadge } from './manifest';
 import type { OJSManifest } from './types';

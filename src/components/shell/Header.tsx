@@ -15,6 +15,7 @@ export function Header() {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
+    document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
     localStorage.setItem(DARK_MODE_KEY, String(dark));
   }, [dark]);
 

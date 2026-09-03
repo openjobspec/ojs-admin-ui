@@ -7,11 +7,19 @@ Thank you for your interest in contributing! This guide will help you get starte
 ```bash
 git clone https://github.com/openjobspec/ojs-admin-ui
 cd ojs-admin-ui
-npm install
+npm ci
 npm run dev
 ```
 
 The dev server starts at `http://localhost:5173` and proxies `/ojs/*` to `http://localhost:8080`. Start any OJS-conformant backend on port 8080 to develop against real data.
+
+## Release automation
+
+Release Please reads `release-please-config.json` and
+`.release-please-manifest.json`. Keep the manifest at the actual last published
+version and never add a persistent `release-as`. The repository secret
+`RELEASE_PLEASE_TOKEN` must contain a GitHub App token or fine-grained PAT that
+can create release pull requests/releases and trigger downstream workflows.
 
 ## Available Scripts
 
@@ -21,7 +29,7 @@ The dev server starts at `http://localhost:5173` and proxies `/ojs/*` to `http:/
 | `npm run build` | Build library package (dist/) |
 | `npm run build:app` | Build standalone app (dist-app/) |
 | `npm run lint` | Run TypeScript type checking |
-| `npm run typecheck` | Alias for lint |
+| `npm run lint:types` | Run TypeScript type checking |
 | `npm test` | Run Vitest test suite |
 | `npm run preview` | Preview production build |
 
@@ -70,4 +78,3 @@ src/
 ## License
 
 By contributing, you agree that your contributions will be licensed under the Apache 2.0 License.
-

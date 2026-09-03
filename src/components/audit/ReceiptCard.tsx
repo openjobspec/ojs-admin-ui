@@ -3,9 +3,10 @@ import type { AttestationReceipt } from './types';
 interface ReceiptCardProps {
   receipt: AttestationReceipt;
   onVerify?: (receipt: AttestationReceipt) => void;
+  verifying?: boolean;
 }
 
-export function ReceiptCard({ receipt, onVerify }: ReceiptCardProps) {
+export function ReceiptCard({ receipt, onVerify, verifying = false }: ReceiptCardProps) {
   const levelLabel = receipt.quote?.type === 'none'
     ? 'None'
     : receipt.quote?.type === 'pqc-only'
@@ -81,9 +82,11 @@ export function ReceiptCard({ receipt, onVerify }: ReceiptCardProps) {
         {onVerify && (
           <button
             onClick={() => onVerify(receipt)}
-            className="text-xs px-3 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+            disabled={verifying}
+            aria-busy={verifying}
+            className="text-xs px-3 py-1 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50"
           >
-            Verify
+            {verifying ? 'Verifying…' : 'Verify'}
           </button>
         )}
       </div>

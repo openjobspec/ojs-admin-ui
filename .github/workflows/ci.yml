@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify release calculation
+        run: node scripts/check-release-please.mjs
+
       - name: Lint (TypeScript + ESLint)
         run: npm run lint
 
@@ -37,3 +40,9 @@ jobs:
 
       - name: Build standalone app
         run: npm run build:app
+
+      - name: Verify package dry run and consumer imports
+        run: npm run check:package
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high

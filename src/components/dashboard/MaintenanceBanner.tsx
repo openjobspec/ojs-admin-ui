@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useClient } from '@/hooks/useAppContext';
 import type { MaintenanceStatus } from '@/api/types';
 import { formatDuration } from '@/lib/formatting';
+import { ConfirmModal } from '@/components/common/ConfirmModal';
 
 interface MaintenanceBannerProps {
   status: MaintenanceStatus | null;
@@ -18,16 +19,11 @@ export function MaintenanceBanner({ status, onToggle }: MaintenanceBannerProps) 
   if (!status) return null;
 
   const handleEnable = async () => {
-    setActing(true);
-    try {
-      await client.setMaintenance(true, reason || undefined, duration || undefined);
-      setShowModal(false);
-      setReason('');
-      setDuration('');
-      onToggle();
-    } finally {
-      setActing(false);
-    }
+    await client.setMaintenance(true, reason || undefined, duration || undefined);
+    setShowModal(false);
+    setReason('');
+    setDuration('');
+    onToggle();
   };
 
   const handleDisable = async () => {
@@ -78,58 +74,47 @@ export function MaintenanceBanner({ status, onToggle }: MaintenanceBannerProps) 
         </button>
       </div>
 
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowModal(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-4">Enable Maintenance Mode</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              This will pause all job processing. Active jobs will finish but no new jobs will be fetched.
-            </p>
-            <div className="space-y-3 mb-6">
-              <div>
-                <label className="text-xs text-gray-500 block mb-1">Reason (optional)</label>
-                <input
-                  type="text"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="e.g. Database migration"
-                  className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded px-3 py-1.5 bg-white dark:bg-gray-900"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-gray-500 block mb-1">Duration (optional)</label>
-                <select
-                  value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                  className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded px-3 py-1.5 bg-white dark:bg-gray-900"
-                >
-                  <option value="">Until manually disabled</option>
-                  <option value="15m">15 minutes</option>
-                  <option value="30m">30 minutes</option>
-                  <option value="1h">1 hour</option>
-                  <option value="2h">2 hours</option>
-                  <option value="4h">4 hours</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 text-sm rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+      <ConfirmModal
+        open={showModal}
+        title="Enable Maintenance Mode"
+        message="This will pause all job processing. Active jobs will finish but no new jobs will be fetched."
+        confirmLabel="Enable Maintenance"
+        confirmingLabel="Enabling…"
+        onConfirm={handleEnable}
+        onCancel={() => setShowModal(false)}
+      >
+        <div className="space-y-3 mb-6">
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">
+              Reason (optional)
+              <input
+                type="text"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="e.g. Database migration"
+                className="mt-1 w-full text-sm border border-gray-300 dark:border-gray-600 rounded px-3 py-1.5 bg-white dark:bg-gray-900"
+              />
+            </label>
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">
+              Duration (optional)
+              <select
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                className="mt-1 w-full text-sm border border-gray-300 dark:border-gray-600 rounded px-3 py-1.5 bg-white dark:bg-gray-900"
               >
-                Cancel
-              </button>
-              <button
-                onClick={handleEnable}
-                disabled={acting}
-                className="px-4 py-2 text-sm rounded text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50"
-              >
-                {acting ? 'Enabling…' : 'Enable Maintenance'}
-              </button>
-            </div>
+                <option value="">Until manually disabled</option>
+                <option value="15m">15 minutes</option>
+                <option value="30m">30 minutes</option>
+                <option value="1h">1 hour</option>
+                <option value="2h">2 hours</option>
+                <option value="4h">4 hours</option>
+              </select>
+            </label>
           </div>
         </div>
-      )}
+      </ConfirmModal>
     </>
   );
 }

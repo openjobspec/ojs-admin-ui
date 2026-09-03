@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useClient } from '@/hooks/useAppContext';
-import { useKeyboard } from '@/hooks/useKeyboard';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import type { QueueDetail, PriorityStats } from '@/api/types';
 import { PriorityDistribution } from '@/components/queues/PriorityDistribution';
 
@@ -21,7 +21,7 @@ export function QueueConfigModal({ queue, onClose, onSave }: QueueConfigModalPro
   const [error, setError] = useState<string | null>(null);
   const [priorityStats, setPriorityStats] = useState<PriorityStats | null>(null);
 
-  useKeyboard('Escape', onClose);
+  const dialogRef = useFocusTrap<HTMLDivElement>(true, { onEscape: onClose });
 
   useEffect(() => {
     client.priorityStats(queue.name).then(setPriorityStats).catch(() => setPriorityStats(null));
@@ -67,8 +67,16 @@ export function QueueConfigModal({ queue, onClose, onSave }: QueueConfigModalPro
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full p-6" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-lg font-semibold mb-4">Configure Queue: {queue.name}</h3>
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="queue-config-title"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full p-6 focus:outline-none"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 id="queue-config-title" className="text-lg font-semibold mb-4">Configure Queue: {queue.name}</h3>
 
         {/* Current Configuration Summary */}
         {queue.configuration && (
@@ -243,4 +251,3 @@ export function QueueConfigModal({ queue, onClose, onSave }: QueueConfigModalPro
     </div>
   );
 }
-
