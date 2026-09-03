@@ -458,16 +458,19 @@ export function WorkflowCodeGen({
   const [selectedLang, setSelectedLang] = useState<Language>('typescript');
   const [copied, setCopied] = useState(false);
 
-  const def: WorkflowDef = { type: workflowType, steps, callbackType };
-  const errors = useMemo(() => validateWorkflow(def), [steps, workflowType, callbackType]);
+  const def: WorkflowDef = useMemo(
+    () => ({ type: workflowType, steps, callbackType }),
+    [workflowType, steps, callbackType],
+  );
+  const errors = useMemo(() => validateWorkflow(def), [def]);
   const code = useMemo(() => {
-    if (steps.length === 0) return '// Add steps to generate code';
+    if (def.steps.length === 0) return '// Add steps to generate code';
     try {
       return generators[selectedLang](def);
     } catch {
       return '// Error generating code — check step configuration';
     }
-  }, [steps, workflowType, callbackType, selectedLang]);
+  }, [def, selectedLang]);
 
   const lang = LANGUAGES.find((l) => l.id === selectedLang)!;
 
